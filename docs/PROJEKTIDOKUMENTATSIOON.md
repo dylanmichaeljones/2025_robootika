@@ -99,3 +99,6 @@ Kui skeemi pole veel joonistatud, siis vähemalt kirjelda tekstina, nt:
 **Kirjelda programmi loogikat nii, et seda on võimalik aru saada ka hiljem.**  
 Kui kood töötab, pane siia lühike selgitus + viide failile `src/projektinimi.ino`.  
 Kui kood pole veel valmis, lisa siia pseudokood.
+
+
+dududu
