@@ -3,26 +3,19 @@
 ## 1. Projekti eesmärk ja seadme lühikirjeldus
 **Mis asi see on, mida ja miks me teeme? Millist praktilist probleemi see lahendab?**
 
-Näide stiilist:
-- Meie projekti eesmärk on luua ventilaator, mida saab juhtida infrapuna puldiga.
-- Seadet saab kasutada näiteks ruumi jahutamiseks olukorras, kus käega lülitile ulatamine on ebamugav.
-- Peamised komponendid: elektrimootor, servo, ventilaatori labad (3D prinditud), Arduino mikrokontroller.
-
-👉 _Asenda see kirjeldus enda seadme kirjeldusega._
+Meie projekti eesmärk on luua "veekeetja", mille töö käib läbi tuumajaama stiilis kasutajaliidese.
+Sellega tuleb ka kaasa üldine tuumajaama simulatsioon, läbi mille veekeetja tööd juhtida.
+Peamised komponendid ei ole veel kindlad.
 
 ---
 
 ## 2. Sisendite loetelu
 **Millised on süsteemi poolt loetavad / mõõdetavad sisendid? Millega neid mõõdetakse / tuvastatakse?**
 
-Kirjelda kõik sisendid eraldi punktidena.  
-Näited (asenda enda projektiga):
+Peamine voolulüliti.
+kõvasti lüliteid voolu edasi andmiseks eri komponentidele
 
-- Nupp "vasakule" puldil → IR-sensor loeb signaali
-- Nupp "paremale" puldil → IR-sensor loeb signaali
-- Nupp "+" puldil → IR-sensor loeb signaali (tõsta kiirust)
-- Nupp "-" puldil → IR-sensor loeb signaali (vähenda kiirust)
-- ON/OFF nupp → IR-sensor loeb signaali
+Veetaseme andur võibolla?
 
 👉 _Kui sinu süsteem kasutab muid sensoreid (ultraheli, temperatuuriandur, valgusandur, joystick, BLE telefonis vms), kirjelda need siin koos füüsilise sisendi allikaga._
 
@@ -30,6 +23,10 @@ Näited (asenda enda projektiga):
 
 ## 3. Väljundite loetelu
 **Mida süsteem teeb / muudab? Millega väljund realiseeritakse?**
+
+Mingit küttekeha vee keetmise eesmärgil
+7 ekraani eri simulatsiooniga seotud tulemuste näitamiseks
+Suur RGB led strip juhtvarraste staatuse näitamiseks
 
 Näited (asenda enda projektiga):
 - Ventilaator pöörleb kiiremini / aeglasemalt → DC mootor
