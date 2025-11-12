@@ -4,7 +4,7 @@ const int CONTROL_ROD_POT = A0;
 const int PUMP_POT = A1;
 
 //reaction parameters
-const double FUEL_REACTIVITY = 0.001;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
+const double FUEL_REACTIVITY = 0.0001;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
 const double CONTROL_ROD_EFFECT = 0.05; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
 const double DECAY_RATE = 0.05;  //JAHTUMIS KIIRUS ILMA KÜTUSETA
 const double HEAT_RATE = 0.5; //SOOJA GENEREERIMIS EFFEKT
@@ -53,7 +53,7 @@ void readInputs(){
   int control_raw = analogRead(CONTROL_ROD_POT);
   int pump_raw = analogRead(PUMP_POT);
   
-  control_depth = map(control_raw, 0, 1023, 0, 254);
+  control_depth = map(control_raw, 0, 1023, 0, 1023);
   pump_speed = map(pump_raw, 0, 1023, 0, 100);
 }
 
@@ -63,9 +63,11 @@ void simulateReactor(){
   double dR_dt; //delta reactivity
   
   //reactivity func
-  if (fuel_inserted) {
-  dR_dt = 0.1 + FUEL_REACTIVITY * reactivity * reactivity - CONTROL_ROD_EFFECT * (double)control_depth; //0.1 at the start essentially kickstarts the reactor
-    
+  if (fuel_inserted && reactivity == 0.0){ //kickstart the reactor if its a cold start
+    reactivity = 5.0;
+  }else if (fuel_inserted){
+  dR_dt =  FUEL_REACTIVITY * reactivity * reactivity - CONTROL_ROD_EFFECT * (double)control_depth;
+
   } else {
     dR_dt = - DECAY_RATE * reactivity;
   }//end reactivity if else
