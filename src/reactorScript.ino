@@ -1,4 +1,4 @@
-//TODO ADD TURBINES
+#include <TM1637Display.h>
 //Pins------------
 //fuel rods
 const int FUEL1_POT = A1;
@@ -9,15 +9,24 @@ const int CONTROL_ROD_POT = A0;
 //Pumps
 const int PUMP1_POT = A4;
 const int PUMP2_POT = A5;
+const int TURPIN_LED = 3;
+const int TURPIN = 2;
+const int DISPLAY_CLOCK = 4;
+const int DISPLAY_FUEL = 5;
+const int DISPLAY_CONTROL = 6;
+const int DISPLAY_PUMPS = 7;
+//vesi
+const double STARTING_WATER = 2000.0;
 
 const int TURBINE_PIN = 2;
 //reaction parameters
-const double FUEL_REACTIVITY = 0.002;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
+const double FUEL_REACTIVITY = 0.0005;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
 const double CONTROL_ROD_EFFECT = 8.0; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
-const double DECAY_RATE = 0.05;  //JAHTUMIS KIIRUS ILMA KÜTUSETA
-const double HEAT_RATE = 0.5; //SOOJA GENEREERIMIS EFFEKT
+const double DECAY_RATE = 0.05;  //reaktiivsuse langus  KIIRUS ILMA KÜTUSETA
+const double HEAT_RATE = 0.1; //SOOJA GENEREERIMIS EFFEKT
+const double COOLING_EFFECT = 1.0;
 const double PUMP_EFFECT = 1.0; //PUMBA EFFEKTIIVSUS
-const double MAX_REACTIVITY = 1000.0; //PUCCISPIIR(tm)
+const double MAX_REACTIVITY = 3000.0; //PUCCISPIIR(tm)
 const double MAX_HEAT = 500.0; //KUUMAHOIATUS
 const double STARTUP_REACTIVITY = 5.0; //KICKSTART REAKTIIVSUS KUI KÕIK VARDAD SISESTATUD
 
@@ -26,11 +35,12 @@ const double STARTUP_REACTIVITY = 5.0; //KICKSTART REAKTIIVSUS KUI KÕIK VARDAD 
 double reactivity = 0.0;
 double heat = 0.0;
 double power = 0.0;
-uint8_t control_rod_depth = 0;
-uint8_t pump1_speed = 0;
-uint8_t pump2_speed = 0;
+int control_rod_depth = 0;
+int pump1_speed = 0;
+int pump2_speed = 0;
 bool turbine_enabled = 0;
-uint8_t fuel_depth = 0;
+int fuel_depth = 0;
+double water_level = 2000.0;
 
 
 
@@ -38,12 +48,24 @@ uint8_t fuel_depth = 0;
 unsigned long lastUpdateTime = 0;
 const unsigned long TICKRATE = 1000; //update rate, 1000 = 1 update per second
 
+
+//initialize displays
+TM1637Display PumpDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_PUMPS);
+TM1637Display FuelDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_FUEL);
+TM1637Display ControlDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_CONTROL);
+
 void setup() {
   //initialize serial
   Serial.begin(9600);
 
   pinMode(TURBINE_PIN, INPUT_PULLUP); // pin low = inserted true
- 
+
+  PumpDisplay.clear();
+  FuelDisplay.clear();
+  ControlDisplay.clear();
+  PumpDisplay.setBrightness(7);
+  FuelDisplay.setBrightness(7);
+  ControlDisplay.setBrightness(7);
  
   //finish setup message
   Serial.println("Reactor online, weapons online, all systems nominal");
@@ -57,6 +79,7 @@ void loop() {
   simulateReactor();
   simulateTurbine();
   printStatus();
+  displayInfo();
   
   //set current time
   lastUpdateTime = currentTime;
@@ -95,9 +118,9 @@ void simulateReactor(){
   //reactivity func
   int rods_reactivity = fuel_depth * FUEL_REACTIVITY; //reaktiivsus jagatakse 3 varda vahel
 
-  if (fuel_depth > 200 && reactivity == 0.0){ //kickstart the reactor if its a cold start
+  if (fuel_depth > 100 && reactivity == 0.0){ //kickstart the reactor if its a cold start
     reactivity = STARTUP_REACTIVITY;
-  }else if (fuel_depth > 10){
+  }else if (fuel_depth > 10 && reactivity > 3.0){
   dR_dt = rods_reactivity * reactivity - (CONTROL_ROD_EFFECT * (double)control_rod_depth / 50.0);
 
   } else { //kui kütust pole sees
@@ -111,7 +134,7 @@ void simulateReactor(){
   
   //---------------heat simulation-------------
     //calc heat and clamp it to pos
-  double dH_dt = HEAT_RATE * reactivity - PUMP_EFFECT * ((double)pump1_speed + (double)pump2_speed) / 4.0;
+  double dH_dt = HEAT_RATE * reactivity -  (PUMP_EFFECT + COOLING_EFFECT) * ((double)pump1_speed + (double)pump2_speed) / 4.0;
   heat += dH_dt * dt;
   if(heat<0.0) heat = 0.0;
 
@@ -119,32 +142,65 @@ void simulateReactor(){
 
 //todo: effektiivsuspiirkond lisada turbiinile sõltuvalt reaktori iseloomust,
 void simulateTurbine(){
-  //kui vesi keeb tee auru
+  double dt = (double)TICKRATE / 1000.0;
+  
+  turbine_enabled = (digitalRead(TURPIN) == LOW);
+  digitalWrite(TURPIN_LED, turbine_enabled ? HIGH : LOW);
+
+  //kui vesi keeb tee auru ja vähenda vett
   if (heat > 100.0){
     double steam = (heat - 100.0) * 2;
+    heat = heat - COOLING_EFFECT * steam;
+
+    //veekadu
+    double evap_rate = water_level - (steam * dt) + pump1_speed + pump2_speed;
+
+    water_level = water_level - evap_rate;
+    if(turbine_enabled){
     power = steam * steam;
+    }//turbine
   }
 }//end turbine
 
-void printStatus(){
-    Serial.print("Fuel rod total insertion");
-    Serial.print(fuel_depth);
-    Serial.print(" | Control Rods: ");
-    Serial.print(control_rod_depth);
-    Serial.print(" | Pump1 and 2 Speed: ");
-    Serial.print(pump1_speed, pump2_speed);
-    Serial.print(" | Reactivity and heat");
-    Serial.print(reactivity);
-    Serial.print(heat);
-    Serial.print("Power");
-    Serial.print(power);
+void displayInfo(){
+  int pumpsInfo = static_cast<int>(pump1_speed + pump2_speed);
+  int fuelInfo = static_cast<int>(fuel_depth);
+  int controlInfo = static_cast<int>(control_rod_depth);
+  PumpDisplay.showNumberDec(pumpsInfo);
+  FuelDisplay.showNumberDec(fuelInfo);
+  ControlDisplay.showNumberDec(controlInfo);
+}
 
-  
+void printStatus() {
+    char buffer[128];
+
+    // Header
+    Serial.println("+--------------------------------------------------------------------------------+");
+    Serial.println("| FuelDepth | ControlRods | Pump1 | Pump2 | Reactivity |  Heat  | Power | Turbine | WaterLvl |");
+    Serial.println("+--------------------------------------------------------------------------------+");
+
+    // Format line (each column is fixed width)
+    snprintf(buffer, sizeof(buffer),
+        "| %9d | %11d | %5d | %5d | %10d | %6d | %6d | %7d | %9d |",
+        fuel_depth,
+        control_rod_depth,
+        pump1_speed,
+        pump2_speed,
+        reactivity,
+        heat,
+        power,
+        turbine_enabled,
+        water_level
+    );
+
+    Serial.println(buffer);
+    Serial.println("+--------------------------------------------------------------------------------+");
+
+    // Warnings
     if (reactivity > MAX_REACTIVITY) {
-      Serial.print(" | WARNING: Reactivity runaway imminent!");
+        Serial.println("⚠️  WARNING: Reactivity runaway imminent!");
     }
     if (heat > MAX_HEAT) {
-      Serial.print(" | ALERT: Meltdown risk - heat too high!");
+        Serial.println("🔥 ALERT: Meltdown risk — heat too high!");
     }
-    Serial.println();
-}//end printStatus
+}//endprintstatus
