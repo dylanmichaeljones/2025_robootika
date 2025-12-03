@@ -26,14 +26,16 @@ const double DECAY_RATE = 0.05;  //reaktiivsuse langus  KIIRUS ILMA KÜTUSETA
 const double HEAT_RATE = 0.1; //SOOJA GENEREERIMIS EFFEKT
 const double COOLING_EFFECT = 1.0;
 const double PUMP_EFFECT = 1.0; //PUMBA EFFEKTIIVSUS
+const double PUMP_COOLING_EFFECT = 0.3;
 const double MAX_REACTIVITY = 3000.0; //PUCCISPIIR(tm)
 const double MAX_HEAT = 500.0; //KUUMAHOIATUS
 const double STARTUP_REACTIVITY = 5.0; //KICKSTART REAKTIIVSUS KUI KÕIK VARDAD SISESTATUD
+const double STEAM_EFFECT = 0.05;
 
 //VARS-------------
 //reactor
 double reactivity = 0.0;
-double heat = 0.0;
+double heat = 18.0; //startup heat
 double power = 0.0;
 int control_rod_depth = 0;
 int pump1_speed = 0;
@@ -134,7 +136,7 @@ void simulateReactor(){
   
   //---------------heat simulation-------------
     //calc heat and clamp it to pos
-  double dH_dt = HEAT_RATE * reactivity -  (PUMP_EFFECT + COOLING_EFFECT) * ((double)pump1_speed + (double)pump2_speed) / 4.0;
+  double dH_dt = HEAT_RATE * reactivity -  (PUMP_EFFECT + COOLING_EFFECT) * ((double)pump1_speed + (double)pump2_speed * PUMP_COOLING_EFFECT) / 4.0;
   heat += dH_dt * dt;
   if(heat<0.0) heat = 0.0;
 
@@ -147,15 +149,36 @@ void simulateTurbine(){
   turbine_enabled = (digitalRead(TURPIN) == LOW);
   digitalWrite(TURPIN_LED, turbine_enabled ? HIGH : LOW);
 
-  //kui vesi keeb tee auru ja vähenda vett
-  if (heat > 100.0){
-    double steam = (heat - 100.0) * 2;
-    heat = heat - COOLING_EFFECT * steam;
+  //kui vesi soe tee auru ja vähenda vett
+  if (heat > 70.0){
+    double steam = (heat - 70) * STEAM_EFFECT;
 
-    //veekadu
-    double evap_rate = water_level - (steam * dt) + pump1_speed + pump2_speed;
+    //kui vett on üle miinimumi ära fläshboili seda
+    if (water_level > 100.0){
+      if (water_level > 2000.0){
+      water_level = 2000.0;
+      }
 
-    water_level = water_level - evap_rate;
+      heat = heat - COOLING_EFFECT * steam;
+      if(heat > 100.0){
+        heat = 100.0;
+      }
+    }
+    
+    double steam_cooling_effect = steam * COOLING_EFFECT;
+
+
+    //veekadu on aur korda aeg
+    double evap_rate = (steam * dt);
+
+    //vesi kaub evap ratega ja tuleb juurde pumbaga
+    water_level = water_level - evap_rate + ((pump1_speed + pump2_speed) * PUMP_EFFECT);;
+
+    //clamp water level to min max
+    if(water_level < 0.0){
+      water_level = 0.0;
+    }
+
     if(turbine_enabled){
     power = steam * steam;
     }//turbine
@@ -176,24 +199,26 @@ void printStatus() {
 
     // Header
     Serial.println("+--------------------------------------------------------------------------------+");
-    Serial.println("| FuelDepth | ControlRods | Pump1 | Pump2 | Reactivity |  Heat  | Power | Turbine | WaterLvl |");
-    Serial.println("+--------------------------------------------------------------------------------+");
-
-    // Format line (each column is fixed width)
-    snprintf(buffer, sizeof(buffer),
-        "| %9d | %11d | %5d | %5d | %10d | %6d | %6d | %7d | %9d |",
-        fuel_depth,
-        control_rod_depth,
-        pump1_speed,
-        pump2_speed,
-        reactivity,
-        heat,
-        power,
-        turbine_enabled,
-        water_level
-    );
-
-    Serial.println(buffer);
+    Serial.print("  fuel_depth");
+    Serial.print(fuel_depth);
+    Serial.print("  control_rod_depth");
+    Serial.print(control_rod_depth);
+    Serial.print("  pumps");
+    Serial.print( pump1_speed);
+    Serial.print(", ");
+    Serial.print( pump2_speed);
+    Serial.println();
+    Serial.print("  reactivity");
+    Serial.print( reactivity);
+    Serial.print("  heat");
+    Serial.print( heat);
+    Serial.print("  power");
+    Serial.print( power);
+    Serial.print("  turbine");
+    Serial.print( turbine_enabled);
+    Serial.print("  water level");
+    Serial.print(water_level);
+    Serial.println();
     Serial.println("+--------------------------------------------------------------------------------+");
 
     // Warnings
