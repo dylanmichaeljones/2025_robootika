@@ -30,13 +30,11 @@ const double STARTING_WATER = 2000.0;
 
 const int TURBINE_PIN = 2;
 //reaction parameters
-const double CONTROL_ROD_EFFECT = 8.0; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
 const double FUEL_REACTIVITY = 0.0005;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
 const double CONTROL_ROD_EFFECT = 0.8; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
 const double DECAY_RATE = 0.05;  //reaktiivsuse langus  KIIRUS ILMA KÜTUSETA
 const double HEAT_RATE = 0.1; //SOOJA GENEREERIMIS EFFEKT
 const double COOLING_EFFECT = 1.0;
-const double PUMP_EFFECT = 1.0; //PUMBA EFFEKTIIVSUS
 const double PUMP_EFFECT = 0.5; //PUMBA EFFEKTIIVSUS
 const double PUMP_COOLING_EFFECT = 0.2;
 const double MAX_REACTIVITY = 3000.0; //PUCCISPIIR(tm)
@@ -150,9 +148,6 @@ void readInputs(){
   int fuel1_depth = map(fuel1_depth_global, 0, 1023, 0, 1023);
   int fuel2_depth = map(fuel2_depth_global, 0, 1023, 0, 1023);
   int fuel3_depth = map(fuel3_depth_global, 0, 1023, 0, 1023);
-  int fuel1_depth = map(fuel1_raw, 0, 1023, 0, 1023);
-  int fuel2_depth = map(fuel2_raw, 0, 1023, 0, 1023);
-  int fuel3_depth = map(fuel3_raw, 0, 1023, 0, 1023);
 
   fuel_depth = fuel1_depth + fuel2_depth + fuel3_depth;
 
