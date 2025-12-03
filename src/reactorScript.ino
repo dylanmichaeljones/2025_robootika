@@ -116,14 +116,6 @@ void loop() {
     displayInfo();
     displayFuelRods(); // ADDED: Update the LED strip
     
-    //set current time
-    lastUpdateTime = currentTime;
-  readInputs();
-  simulateReactor();
-  simulateTurbine();
-  printStatus();
-  displayInfo();
-  
   //set current time
   lastUpdateTime = currentTime;
   }
