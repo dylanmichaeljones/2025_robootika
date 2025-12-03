@@ -15,7 +15,6 @@ Peamised komponendid ei ole veel kindlad.
 Peamine voolulüliti.
 kõvasti lüliteid voolu edasi andmiseks eri komponentidele
 
-Veetaseme andur võibolla?
 
 👉 _Kui sinu süsteem kasutab muid sensoreid (ultraheli, temperatuuriandur, valgusandur, joystick, BLE telefonis vms), kirjelda need siin koos füüsilise sisendi allikaga._
 
@@ -27,12 +26,6 @@ Veetaseme andur võibolla?
 Mingit küttekeha vee keetmise eesmärgil
 7 ekraani eri simulatsiooniga seotud tulemuste näitamiseks
 Suur RGB led strip juhtvarraste staatuse näitamiseks
-
-Näited (asenda enda projektiga):
-- Ventilaator pöörleb kiiremini / aeglasemalt → DC mootor
-- Ventilaator suunab õhu vasakule / paremale → servo
-- LED süttib / kustub → LED
-- Ekraanile kuvatakse temperatuur → OLED ekraan
 
 ---
 
