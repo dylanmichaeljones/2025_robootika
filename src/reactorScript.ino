@@ -30,13 +30,15 @@ const double STARTING_WATER = 2000.0;
 
 const int TURBINE_PIN = 2;
 //reaction parameters
-const double FUEL_REACTIVITY = 0.0005;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
 const double CONTROL_ROD_EFFECT = 8.0; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
-const double DECAY_RATE = 0.05;  //reaktiivsuse langus  KIIRUS ILMA KÜTUSETA
+const double FUEL_REACTIVITY = 0.0005;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
+const double CONTROL_ROD_EFFECT = 0.8; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
+const double DECAY_RATE = 0.05;  //reaktiivsuse langus  KIIRUS ILMA KÜTUSETA
 const double HEAT_RATE = 0.1; //SOOJA GENEREERIMIS EFFEKT
 const double COOLING_EFFECT = 1.0;
 const double PUMP_EFFECT = 1.0; //PUMBA EFFEKTIIVSUS
-const double PUMP_COOLING_EFFECT = 0.3;
+const double PUMP_EFFECT = 0.5; //PUMBA EFFEKTIIVSUS
+const double PUMP_COOLING_EFFECT = 0.2;
 const double MAX_REACTIVITY = 3000.0; //PUCCISPIIR(tm)
 const double MAX_HEAT = 500.0; //KUUMAHOIATUS
 const double STARTUP_REACTIVITY = 5.0; //KICKSTART REAKTIIVSUS KUI KÕIK VARDAD SISESTATUD
@@ -100,7 +102,7 @@ void setup() {
   PumpDisplay.setBrightness(7);
   FuelDisplay.setBrightness(7);
   ControlDisplay.setBrightness(7);
-  
+ 
   //finish setup message
   Serial.println("Reactor online, weapons online, all systems nominal");
 }//end setup
@@ -118,6 +120,14 @@ void loop() {
     
     //set current time
     lastUpdateTime = currentTime;
+  readInputs();
+  simulateReactor();
+  simulateTurbine();
+  printStatus();
+  displayInfo();
+  
+  //set current time
+  lastUpdateTime = currentTime;
   }
 }//end loop
 
@@ -132,11 +142,17 @@ void readInputs(){
   fuel1_depth_global = analogRead(FUEL1_POT);
   fuel2_depth_global = analogRead(FUEL2_POT);
   fuel3_depth_global = analogRead(FUEL3_POT);
+  int fuel1_raw = analogRead(FUEL1_POT);
+  int fuel2_raw = analogRead(FUEL2_POT);
+  int fuel3_raw = analogRead(FUEL3_POT);
   
   // Use the global values for the local depth calculation
   int fuel1_depth = map(fuel1_depth_global, 0, 1023, 0, 1023);
   int fuel2_depth = map(fuel2_depth_global, 0, 1023, 0, 1023);
   int fuel3_depth = map(fuel3_depth_global, 0, 1023, 0, 1023);
+  int fuel1_depth = map(fuel1_raw, 0, 1023, 0, 1023);
+  int fuel2_depth = map(fuel2_raw, 0, 1023, 0, 1023);
+  int fuel3_depth = map(fuel3_raw, 0, 1023, 0, 1023);
 
   fuel_depth = fuel1_depth + fuel2_depth + fuel3_depth;
 
@@ -158,11 +174,12 @@ void simulateReactor(){
   if (fuel_depth > 100 && reactivity == 0.0){ //kickstart the reactor if its a cold start
     reactivity = STARTUP_REACTIVITY;
   }else if (fuel_depth > 10 && reactivity > 3.0){
-    dR_dt = rods_reactivity * reactivity - (CONTROL_ROD_EFFECT * (double)control_rod_depth / 50.0);
+  dR_dt = rods_reactivity * reactivity - (CONTROL_ROD_EFFECT * (double)control_rod_depth / 50.0);
 
   } else { //kui kütust pole sees
 
-    dR_dt = - DECAY_RATE * reactivity;
+  dR_dt = rods_reactivity * reactivity 
+       - (CONTROL_ROD_EFFECT * (double)control_rod_depth / 1023.0);
   }//end reactivity if else
   
   //calc reactivity and clamp it to positive
@@ -170,8 +187,8 @@ void simulateReactor(){
   if(reactivity<0.0) reactivity=0.0;
   
   //---------------heat simulation-------------
-  //calc heat and clamp it to pos
-  double dH_dt = HEAT_RATE * reactivity -  (PUMP_EFFECT + COOLING_EFFECT) * ((double)pump1_speed + (double)pump2_speed * PUMP_COOLING_EFFECT) / 4.0;
+    //calc heat and clamp it to pos
+  double dH_dt = HEAT_RATE * reactivity -  (PUMP_EFFECT + COOLING_EFFECT) * ((double)pump1_speed + (double)pump2_speed * PUMP_COOLING_EFFECT) / 4.0;
   heat += dH_dt * dt;
   if(heat<0.0) heat = 0.0;
 
@@ -191,7 +208,7 @@ void simulateTurbine(){
     //kui vett on üle miinimumi ära fläshboili seda
     if (water_level > 100.0){
       if (water_level > 2000.0){
-        water_level = 2000.0;
+      water_level = 2000.0;
       }
 
       heat = heat - COOLING_EFFECT * steam;
@@ -213,9 +230,10 @@ void simulateTurbine(){
     if(water_level < 0.0){
       water_level = 0.0;
     }
-
+    
+    //TODO: if power üle mingi 3000 on overspeed ja turbina aiblinarina
     if(turbine_enabled){
-      power = steam * steam;
+    power = steam * steam - (pump1_speed + pump2_speed);
     }//turbine
   }
 }//end turbine
