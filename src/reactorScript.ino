@@ -14,9 +14,11 @@ const int PUMP2_POT = A5;
 const int TURPIN_LED = 3;
 const int TURPIN = 2;
 const int DISPLAY_CLOCK = 4;
-const int DISPLAY_FUEL = 5;
-const int DISPLAY_CONTROL = 6;
-const int DISPLAY_PUMPS = 7;
+const int DISPLAY_REACTIVITY = 5;
+const int DISPLAY_POWER = 6;
+const int DISPLAY_HEAT = 7;
+const int DISPLAY_WATER = 8;
+const int TURBINE_PIN = 2;
 
 // ADDED: FastLED Definitions
 #define NUM_LEDS 9       // 3 rows of 3 LEDs (for 3 fuel rods)
@@ -28,17 +30,18 @@ CRGB leds[NUM_LEDS];     // The LED array
 //vesi
 const double STARTING_WATER = 2000.0;
 
-const int TURBINE_PIN = 2;
+
 //reaction parameters
 const double FUEL_REACTIVITY = 0.0005;  //TUUNIDA SEDA REAKTIIVSUSE JAOKS
-const double CONTROL_ROD_EFFECT = 0.8; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
+const double CONTROL_ROD_EFFECT = 1; //tUUNIDA SEDA CONTROL RODSIDE JAOKS
 const double DECAY_RATE = 0.05;  //reaktiivsuse langus  KIIRUS ILMA KÜTUSETA
 const double HEAT_RATE = 0.1; //SOOJA GENEREERIMIS EFFEKT
 const double COOLING_EFFECT = 1.0;
 const double PUMP_EFFECT = 0.5; //PUMBA EFFEKTIIVSUS
 const double PUMP_COOLING_EFFECT = 0.2;
-const double MAX_REACTIVITY = 3000.0; //PUCCISPIIR(tm)
-const double MAX_HEAT = 500.0; //KUUMAHOIATUS
+const double MAX_REACTIVITY = 10000.0; //PUCCISPIIR(tm)
+const double MAX_HEAT = 110.0; //KUUMAHOIATUS
+const double MIN_WATERLEVEL = 1750.0; //VEETASEME HOIATUS
 const double STARTUP_REACTIVITY = 5.0; //KICKSTART REAKTIIVSUS KUI KÕIK VARDAD SISESTATUD
 const double STEAM_EFFECT = 0.05;
 
@@ -66,9 +69,10 @@ const unsigned long TICKRATE = 1000; //update rate, 1000 = 1 update per second
 
 
 //initialize displays
-TM1637Display PumpDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_PUMPS);
-TM1637Display FuelDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_FUEL);
-TM1637Display ControlDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_CONTROL);
+TM1637Display TempDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_HEAT);
+TM1637Display ReactivityDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_REACTIVITY);
+TM1637Display PowerDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_POWER);
+TM1637Display WaterLevelDisplay = TM1637Display(DISPLAY_CLOCK, DISPLAY_WATER);
 
 // ADDED: FastLED Helper Function
 void setFuelRodLeds(int fuelValue, int startLed, CRGB color) {
@@ -94,12 +98,15 @@ void setup() {
   pinMode(TURBINE_PIN, INPUT_PULLUP); // pin low = inserted true
   pinMode(TURPIN_LED, OUTPUT); // Ensure TURPIN_LED is set as OUTPUT
 
-  PumpDisplay.clear();
-  FuelDisplay.clear();
-  ControlDisplay.clear();
-  PumpDisplay.setBrightness(7);
-  FuelDisplay.setBrightness(7);
-  ControlDisplay.setBrightness(7);
+  TempDisplay.clear();
+  ReactivityDisplay.clear();
+  PowerDisplay.clear();
+  WaterLevelDisplay.clear();
+  TempDisplay.setBrightness(7);
+  ReactivityDisplay.setBrightness(7);
+  PowerDisplay.setBrightness(7);
+  WaterLevelDisplay.setBrightness(7);
+ 
  
   //finish setup message
   Serial.println("Reactor online, weapons online, all systems nominal");
@@ -151,28 +158,27 @@ void readInputs(){
 //todo add water level simualtion if still 2 boring 4 u
 void simulateReactor(){
   //delta time calculation
-  double dt = (double)TICKRATE / 1000.0;
-  double dR_dt; //delta reactivity
-  
-  //TODO ADD MORE PUMPS AND FUEL BELOW
-  //reactivity func
-  int rods_reactivity = fuel_depth * FUEL_REACTIVITY; //reaktiivsus jagatakse 3 varda vahel
+  double dt = (double)TICKRATE / 1000.0; //DT delta time
+  double dR_dt; //delta taim reaktiivsus ajas
+ 
 
-  if (fuel_depth > 100 && reactivity == 0.0){ //kickstart the reactor if its a cold start
+// --- Reactivity calculation ---
+double rods_reactivity = (fuel_depth / 3.0) * FUEL_REACTIVITY; 
+double control_effect = CONTROL_ROD_EFFECT * (double)control_rod_depth;
+
+// kickstart
+if (reactivity == 0.0 && fuel_depth > 100) {
     reactivity = STARTUP_REACTIVITY;
-  }else if (fuel_depth > 10 && reactivity > 3.0){
-  dR_dt = rods_reactivity * reactivity - (CONTROL_ROD_EFFECT * (double)control_rod_depth / 50.0);
+}
 
-  } else { //kui kütust pole sees
+// reactivity growth when all things applied
+dR_dt = (rods_reactivity * (1.0 + reactivity)) - control_effect;
 
-  dR_dt = rods_reactivity * reactivity 
-       - (CONTROL_ROD_EFFECT * (double)control_rod_depth / 1023.0);
-  }//end reactivity if else
-  
-  //calc reactivity and clamp it to positive
-  reactivity += dR_dt * dt;
-  if(reactivity<0.0) reactivity=0.0;
-  
+
+reactivity += dR_dt * dt;
+
+//clamp reactivity to pos.
+if (reactivity < 0.0) reactivity = 0.0;
   //---------------heat simulation-------------
     //calc heat and clamp it to pos
   double dH_dt = HEAT_RATE * reactivity -  (PUMP_EFFECT + COOLING_EFFECT) * ((double)pump1_speed + (double)pump2_speed * PUMP_COOLING_EFFECT) / 4.0;
@@ -181,7 +187,6 @@ void simulateReactor(){
 
 }//end simulateReactor
 
-//todo: effektiivsuspiirkond lisada turbiinile sõltuvalt reaktori iseloomust,
 void simulateTurbine(){
   double dt = (double)TICKRATE / 1000.0;
   
@@ -217,8 +222,7 @@ void simulateTurbine(){
     if(water_level < 0.0){
       water_level = 0.0;
     }
-    
-    //TODO: if power üle mingi 3000 on overspeed ja turbina aiblinarina
+
     if(turbine_enabled){
     power = steam * steam - (pump1_speed + pump2_speed);
     }//turbine
@@ -226,12 +230,14 @@ void simulateTurbine(){
 }//end turbine
 
 void displayInfo(){
-  int pumpsInfo = static_cast<int>(pump1_speed + pump2_speed);
-  int fuelInfo = static_cast<int>(fuel_depth);
-  int controlInfo = static_cast<int>(control_rod_depth);
-  PumpDisplay.showNumberDec(pumpsInfo);
-  FuelDisplay.showNumberDec(fuelInfo);
-  ControlDisplay.showNumberDec(controlInfo);
+  int tempInfo = static_cast<int>(heat);
+  int reactivityInfo = static_cast<int>(reactivity);
+  int powerInfo = static_cast<int>(power);
+  int waterLevel = static_cast<int>(water_level);
+  TempDisplay.showNumberDec(tempInfo);
+  ReactivityDisplay.showNumberDec(reactivityInfo);
+  PowerDisplay.showNumberDec(powerInfo);
+  WaterLevelDisplay.showNumberDec(waterLevel);
 }
 
 // ADDED: Function to update FastLED strip
@@ -277,10 +283,13 @@ void printStatus() {
   Serial.println("+--------------------------------------------------------------------------------+");
 
   // Warnings
-  if (reactivity > MAX_REACTIVITY) {
-    Serial.println("⚠️  WARNING: Reactivity runaway imminent!");
-  }
-  if (heat > MAX_HEAT) {
-    Serial.println("🔥 ALERT: Meltdown risk — heat too high!");
-  }
+    if (reactivity > MAX_REACTIVITY) {
+        Serial.println(" WARNING: Reactivity runaway imminent!");
+    }
+    if (heat > MAX_HEAT) {
+        Serial.println(" ALERT: Meltdown risk — heat too high!");
+    }
+       if (water_level < MIN_WATERLEVEL) {
+        Serial.println("ALERT: Water level dangerously low!");
+    }
 }//endprintstatus
