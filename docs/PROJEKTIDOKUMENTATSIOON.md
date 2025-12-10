@@ -13,13 +13,13 @@ Sellega tuleb ka kaasa üldine tuumajaama simulatsioon, läbi mille veekeetja t�
 **Millised on süsteemi poolt loetavad / mõõdetavad sisendid? Millega neid mõõdetakse / tuvastatakse?**
 
 Peamised sisendid:
-Kütusevarraste kontroll potentiomeetrid (3 tükki) - Mõõdetakse arduiino poolt ning määravad ära süsteemi.
-Kontrollvarda potentiomeeter - Määrab kontrollvarda töö tugevust, millega kontrollida reaktsiooni kulgu.
-Veepumpade potentiomeeter (2 tükki) - kontrollivad pumpade jõudu ning seekaudu palju vett reaktorisse siseneb. Kontrollitakse sellega reaktori temperatuuri ning ka veetaset.
-Veepumpade master switch: arduiino väline, kontrollib elektrivoolu pumpade vooluringi.
-Veepumpade lülitid(2 tükki): Lülitavad eri pumpade vooluringi.
-Turbiini lüliti - Laseb genereeritud auru reaktorist turbiini tootes sellega energiat. 
-Hoiatustulede lüliti - kontrollib hoiatustulede vooluringi.
+ - Kütusevarraste kontroll potentiomeetrid (3 tükki) - Mõõdetakse arduiino poolt ning määravad ära süsteemi.
+ - Kontrollvarda potentiomeeter - Määrab kontrollvarda töö tugevust, millega kontrollida reaktsiooni kulgu.
+ - Veepumpade potentiomeeter (2 tükki) - kontrollivad pumpade jõudu ning seekaudu palju vett reaktorisse siseneb. Kontrollitakse sellega reaktori temperatuuri ning ka veetaset.
+ - Veepumpade master switch: arduiino väline, kontrollib elektrivoolu pumpade vooluringi.
+ - Veepumpade lülitid(2 tükki): Lülitavad eri pumpade vooluringi.
+ - Turbiini lüliti - Laseb genereeritud auru reaktorist turbiini tootes sellega energiat. 
+ - Hoiatustulede lüliti - kontrollib hoiatustulede vooluringi.
 
 
 ---
@@ -46,26 +46,26 @@ Suur RGB led strip juhtvarraste staatuse näitamiseks
 ## 4. Nõuded loodavale seadmele
 **Mis peab toimuma, kui kasutaja teeb mingi toimingu? Kirjelda käitumisloogika.**
 
-Kui reaktor on külm ja alles alustatud peab reaktor olema algväärtustatud sarnaselt:
-veetemperatuur 18.0c,
-Veetase 2000.0liitrit
-Reaktiivsus 0.
+ - Kui reaktor on külm ja alles alustatud peab reaktor olema algväärtustatud sarnaselt:
+   veetemperatuur 18.0c,
+   Veetase 2000.0liitrit,
+    Reaktiivsus 0.
 
-Varraste sisestamisel üle piirväärtuse (100 ühikut 3069st (iga varras on 1023 bitti)_käivitub kickstart kus sisestatakse reaktorisse reaktiivsus ühikuga 5.
+ - Varraste sisestamisel üle piirväärtuse (100 ühikut 3069st (iga varras on 1023 bitti)_käivitub kickstart kus sisestatakse reaktorisse reaktiivsus ühikuga 5.
 
-Reaktiivsus peab ajas tõusma ruutfunktsiooniga kütusevarraste reaktiivsus korda nende sisestusügavus kui kütusevardad on sisestatud. Reaktiivsus peab aeglaselt langema kui kütusevardad on reaktorist välja tõmmatud.
+ - Reaktiivsus peab ajas tõusma ruutfunktsiooniga kütusevarraste reaktiivsus korda nende sisestusügavus kui kütusevardad on sisestatud. Reaktiivsus peab aeglaselt langema kui kütusevardad on reaktorist välja tõmmatud.
 
-Kontrollvarras peab seda reaktsiioni tõusu aeglustama.
+ - Kontrollvarras peab seda reaktsiioni tõusu aeglustama.
 
-Reaktiivsus tõstab aeglaselt vee temperatuuri. Üle 70c hakkab vesi aurama ning sellega väheneb veetase ning genereeritakse auru.
+ - Reaktiivsus tõstab aeglaselt vee temperatuuri. Üle 70c hakkab vesi aurama ning sellega väheneb veetase ning genereeritakse auru.
 
-Vesi jääb 100c ringi kus ta keeb ning auru toodetakse rohkem vastavalt reaktiivsusele ning vähendatakse ka veetaset. Keemine kaitseb vee kiiraurustumist kuni minimaalse veetasemeni.
+ - Vesi jääb 100c ringi kus ta keeb ning auru toodetakse rohkem vastavalt reaktiivsusele ning vähendatakse ka veetaset. Keemine kaitseb vee kiiraurustumist kuni minimaalse veetasemeni.
 
-Kui turbiin on sisse lülitatud genereerib turbiin energiat millega on võimalik hiljem liidestada füüsilises maailmas olev küttekeha.
+ - Kui turbiin on sisse lülitatud genereerib turbiin energiat millega on võimalik hiljem liidestada füüsilises maailmas olev küttekeha.
 
-Veepumbad lisavad reaktorisse vett ning jahutavad veetemperatuuri.
+ - Veepumbad lisavad reaktorisse vett ning jahutavad veetemperatuuri.
 
-Kui reaktiivsus ja temperatuur lähvad liiga kõrgeks ei ole võimalik reaktorit enam kontrollida ja see ""sulab üles""
+ - Kui reaktiivsus ja temperatuur lähvad liiga kõrgeks ei ole võimalik reaktorit enam kontrollida ja see ""sulab üles""
 
 
 ---
@@ -96,9 +96,7 @@ Tabelina või punktidena. Nt:
 Wokwi simulaatoris ehitatud mudel, mis näitab ka ühendusi.
 https://wokwi.com/projects/448691473688261633
 
-- Fail `hardware/wiring-diagram.png` peab näitama vähemalt:
-  - milline pin Arduinol läheb millise komponendi sisendisse,
-  - kuidas on toide ühendatud.
+
 
 
 ---
@@ -127,5 +125,3 @@ Trükib kõik vajaliku info ka serialisse.
 
 `src/reaktorScript.ino`.  
 
-
-dududu
