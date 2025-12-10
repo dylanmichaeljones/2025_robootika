@@ -76,14 +76,18 @@ Kui reaktiivsus ja temperatuur lähvad liiga kõrgeks ei ole võimalik reaktorit
 Tabelina või punktidena. Nt:
 
 - Arduino Uno (mikrokontroller)
-- 3 slide potentiomeetrit
-- 2 keerdpotentiomeetrit
-- Vana vene veekeetja
-- relee veekeetjale
-- RGB ledstrip
-- 16 ledi seisundi ja hoiatustulede jaoks
-- 4 2 seisundilist lülitit
-- pisoelektirline heligeneraator
+- 3 slide potentiomeetrit: t000150
+- 2 keerdpotentiomeetrit: B10K
+- Vana veneaegne veekeetja: vana nõukogude liidu aegne veekeetja(sobib mistahes veekeetja)
+- relee veekeetjale: SRD-05VDDC-SL-C
+- ledstrip: sobib mistahes LED 3.5/5v strip või hoopiski tavaline led. 
+- 16 ledi seisundi ja hoiatustulede jaoks: Sobivad tavalised LEDid
+- 4 2 seisundilist lülitit: sobivad tavalised 2 positsioonilised lülitid
+- pisoelektirline heligeneraator: B0DGD4Yj1P pieso
+- LED ekraanid: M1637 4 kohaline ekraan.
+- Protolauad
+- Kaablid ühenduseks
+- komposiit vahtplaat või mingi muu plaat kuhu soovi korral ühendada
 ---
 
 ## 6. Ühendusskeem
@@ -104,21 +108,21 @@ https://wokwi.com/projects/448691473688261633
 
 **Kirjelda programmi loogikat nii, et seda on võimalik aru saada ka hiljem.**  
 Programm on jaotatud osadeks, need osad on:
--konstantide ja muutujate määramine
+ - konstantide ja muutujate määramine
 Määratakse ära erinevad konstandid ja muutujad mis on globaalselt saadavad koodis. Nendega saab kergelt tuunida reaktori käitumist ja tundlikust.
--void setup
+ - void setup
 Initsialiseerib ekraanid ja seriali
--void loop
+ - void loop
 Seab üles ajamõõtmise kus ta uuendab iga sekund arvutusi ning kutsub esile allpool loeteldud funktsioonid.
--inputtide funktsioon
+ - inputtide funktsioon
 Loeb hetkeseisu eri sisenditest ning uuendab seotud muutujaid vastavalt nendele.
--reaktori funktsioon
+ - reaktori funktsioon
 Arvutab välja hetkereaktiivsuse ruutfunktsiooni sõltuvalt sisenditele. Lisaks muudab selle reaktiivsuse soojuseks.
--turbiini funktsioon
+ - turbiini funktsioon
 Võtab soojuse ning muudab selle energiaks. Lisaks ka arvutab veetaset ning veekadu ning määrab ära ka pumpade töö.
--info näitamine
+ - info näitamine
 Näitab infot ekraanidel muutes nad esmalt integerideks.
--serialisse info printimine
+ -  serialisse info printimine
 Trükib kõik vajaliku info ka serialisse.
 
 `src/reaktorScript.ino`.  
